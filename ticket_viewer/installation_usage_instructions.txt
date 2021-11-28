@@ -1,0 +1,28 @@
+Ticket Viewer Application
+
+A Java application to view Zendesk tickets on the CLI
+
+Installation And Usage Instructions:
+
+Requirements:
+        1. Java version: 1.8.0
+        2. An IDE (like Eclipse or IntelliJ IDEA) that supports the Java programming language and other functionalities for the programmer (like maven and git)
+
+How to run the application on a Mac using a Command-line window (like Terminal or ITerm):
+        1. Clone the repository into your local machine. As a reminder, the name of the repository is "zendesk_challenge_aryaman".
+        2. By now, you should be able to see the java project, which is titled "ticket_viewer".
+        3. Open up an IDE, and use the pom.xml file contained inside the ticket_viewer directory to open up the project as a
+           Java Maven project. There is a very simple way to do this if you are using the IntelliJ IDEA IDE.
+
+Using the Command-Line window, build the Maven project using the "mvn clean install" command or something equivalent. Note that you should do this
+in the ticket_viewer directory.
+
+After the build is successful, then you should see a "target" directory getting automatically created in the Maven project. On the command-line
+window, go to the target directory.
+
+After that, issue the following command to run the application:
+
+    *** java -cp ticket_viewer-1.0-SNAPSHOT-jar-with-dependencies.jar net.aryaman.challenge.TicketViewerApp ***
+
+Note that you should use the name of the jar file that was automatically created in the target directory (name should end with "with-dependencies")
+

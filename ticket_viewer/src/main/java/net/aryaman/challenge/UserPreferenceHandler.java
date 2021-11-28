@@ -9,12 +9,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class UserPreferenceHandler {
-    private List<Ticket> zDeskTickets = new ArrayList<>();
+    private Map<Long, Ticket> zDeskTicketsMap = new LinkedHashMap<>();
+    private List<Long> ticketIDs = new ArrayList<>();
     private OkHttpClient client;
     private Scanner input;
     private String validSubDomain;
@@ -34,17 +33,17 @@ public class UserPreferenceHandler {
     }
 
     public void displayMultipleTickets() throws IOException {
-        if (zDeskTickets.size() == 0) {
+        if (zDeskTicketsMap.size() == 0) {
             String url = "https://" + validSubDomain + ".zendesk.com/api/v2/tickets.json?page[size]=25";
             Request initRequest = new Request.Builder().url(url).build();
             Response resp = client.newCall(initRequest).execute();
             String ticketsInfo = resp.body().string();
             populateListOfTickets(ticketsInfo);
 
-            for (Ticket t : zDeskTickets) {
+            for (Ticket t : zDeskTicketsMap.values()) {
                 displayTicket(t);
             }
-            currReadPtr = zDeskTickets.size();
+            currReadPtr = ticketIDs.size();
 
             DocumentContext jsonContext = JsonPath.parse(ticketsInfo);
             boolean moreTickets = jsonContext.read("$['meta']['has_more']");
@@ -57,8 +56,8 @@ public class UserPreferenceHandler {
 
         } else {
             if (currentURL == null) { // finished retrieving all tickets
-                if (zDeskTickets.size() <= 25) {
-                    for (Ticket t : zDeskTickets) {
+                if (ticketIDs.size() <= 25) {
+                    for (Ticket t : zDeskTicketsMap.values()) {
                         displayTicket(t);
                     }
                     currReadPtr = 0;
@@ -77,7 +76,7 @@ public class UserPreferenceHandler {
                     return;
                 }
                 // now add more tickets to list for user to see!
-                currReadPtr = zDeskTickets.size();
+                currReadPtr = ticketIDs.size();
                 retrieveMoreTickets();
             }
         }
@@ -98,25 +97,25 @@ public class UserPreferenceHandler {
 
     private boolean displayTicketsAlreadyThere() {
         for (int i = 0; i < 25; i++) {
-            displayTicket(zDeskTickets.get(i));
+            displayTicket(zDeskTicketsMap.get(ticketIDs.get(i)));
         }
         currReadPtr = 25;
         String choice = askUserForYesOrNoAnswer();
 
         if (choice.equals("yes")) {
-            int numTicketsRemaining = zDeskTickets.size() - currReadPtr;
+            int numTicketsRemaining = ticketIDs.size() - currReadPtr;
 
             while (numTicketsRemaining > 25 && choice.equals("yes")) {
                 for (int i = currReadPtr; i < currReadPtr + 25; i++) {
-                    displayTicket(zDeskTickets.get(i));
+                    displayTicket(zDeskTicketsMap.get(ticketIDs.get(i)));
                 }
                 currReadPtr += 25;
-                numTicketsRemaining = zDeskTickets.size() - currReadPtr;
+                numTicketsRemaining = ticketIDs.size() - currReadPtr;
                 choice = askUserForYesOrNoAnswer();
             }
             if (choice.equals("yes")) {
-                for (int i = currReadPtr; i < zDeskTickets.size(); i++) {
-                    displayTicket(zDeskTickets.get(i));
+                for (int i = currReadPtr; i < ticketIDs.size(); i++) {
+                    displayTicket(zDeskTicketsMap.get(ticketIDs.get(i)));
                 }
             } else {
                 currReadPtr = 0;
@@ -149,10 +148,10 @@ public class UserPreferenceHandler {
         String ticketsInfo = resp.body().string();
         populateListOfTickets(ticketsInfo);
 
-        for (int i = currReadPtr; i < zDeskTickets.size(); i++) {
-            displayTicket(zDeskTickets.get(i));
+        for (int i = currReadPtr; i < ticketIDs.size(); i++) {
+            displayTicket(zDeskTicketsMap.get(ticketIDs.get(i))); // retrieve a ticket at a given position in sequence
         }
-        currReadPtr = zDeskTickets.size();
+        currReadPtr = ticketIDs.size();
         DocumentContext jsonContext = JsonPath.parse(ticketsInfo);
         boolean moreTickets = jsonContext.read("$['meta']['has_more']");
 
@@ -184,7 +183,7 @@ public class UserPreferenceHandler {
 
         for (int i = 0; i < arrayOfTickets.length(); i++) {
             JSONObject ticketJson = arrayOfTickets.getJSONObject(i);
-            int ticketID = ticketJson.optInt("id");
+            long ticketID = ticketJson.optLong("id");
             String timeOfCreation = ticketJson.optString("created_at");
             String timeOfUpdate = ticketJson.optString("updated_at");
             String subject = ticketJson.optString("subject");
@@ -194,39 +193,37 @@ public class UserPreferenceHandler {
             DocumentContext jsonContext = JsonPath.parse(ticketInfo);
             List<String> tags = jsonContext.read("$['tags']");
 
-            zDeskTickets.add(new Ticket(ticketID, timeOfCreation, timeOfUpdate, subject, description, tags));
+            zDeskTicketsMap.put(ticketID, new Ticket(ticketID, timeOfCreation, timeOfUpdate, subject, description, tags));
+            ticketIDs.add(ticketID);
         }
     }
 
     public void displayInfoAboutSingleTicket() {
-        if (zDeskTickets.size() > 0) {
-            displayTicket(zDeskTickets.get(promptUserForValidID() - 1));
+        if (ticketIDs.size() > 0) {
+            displayTicket(zDeskTicketsMap.get(promptUserForValidID()));
         } else {
             System.out.println("You first have to view at least 1 ticket, or if there are no tickets in your account, then add some first.\n");
             return;
         }
     }
 
-    private int promptUserForValidID() {
-        boolean validInput = false;
-        int id = -1;
-        System.out.print("Enter an id between 1 and " + String.valueOf(zDeskTickets.size()) + ": ");
+    private long promptUserForValidID() {
+        long id = -1;
+        System.out.print("Enter a valid integer id: ");
         String choice = input.nextLine();
 
-        while (!validInput) {
+        while (true) {
             try {
-                id = Integer.parseInt(choice);
+                id = Long.parseLong(choice);
             } catch (NumberFormatException ex) {
                 System.out.println("Sorry! The input can only be an integer.\n");
             }
-            if (id >= 1 && id <= zDeskTickets.size()) {
-                validInput = true;
+            if (zDeskTicketsMap.containsKey(id)) {
                 break;
             } else {
-                System.out.println("Invalid input! Please try again.\n");
+                System.out.println("You cannot enter an id that hasn't been displayed at least once. Please try again.\n");
             }
-
-            System.out.print("Enter an id between 1 and " + String.valueOf(zDeskTickets.size()) + ": ");
+            System.out.print("Enter a valid integer id: ");
             choice = input.nextLine();
         }
         return id;

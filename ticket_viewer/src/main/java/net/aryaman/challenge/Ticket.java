@@ -3,14 +3,14 @@ package net.aryaman.challenge;
 import java.util.List;
 
 public class Ticket {
-    private int id;
+    private long id;
     private String timeOfCreation;
     private String timeOfUpdate;
     private String subject;
     private String description;
     private List<String> tags;
 
-    public Ticket(int id, String timeOfCreation, String timeOfUpdate, String subject, String description,
+    public Ticket(long id, String timeOfCreation, String timeOfUpdate, String subject, String description,
         List<String> tags) {
         this.id = id;
         this.timeOfCreation = timeOfCreation;
@@ -20,11 +20,11 @@ public class Ticket {
         this.tags = tags;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
