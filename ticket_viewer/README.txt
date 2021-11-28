@@ -6,13 +6,11 @@ Installation And Usage Instructions:
 
 Requirements:
         1. Java version: 1.8.0
-        2. An IDE (like Eclipse or IntelliJ IDEA) that supports the Java programming language and other functionalities for the programmer (like maven and git)
+        2. A command-line interface, like ITerm on a Mac
 
 How to run the application on a Mac using a Command-line window (like Terminal or ITerm):
         1. Clone the repository into your local machine. As a reminder, the name of the repository is "zendesk_challenge_aryaman".
-        2. By now, you should be able to see the java project, which is titled "ticket_viewer".
-        3. Open up an IDE, and use the pom.xml file contained inside the ticket_viewer directory to open up the project as a
-           Java Maven project. There is a very simple way to do this if you are using the IntelliJ IDEA IDE.
+        2. By now, you should be able to see the sub-directory, which is titled "ticket_viewer". Note that this represents a Java Maven Project.
 
 Using the Command-Line window, build the Maven project using the "mvn clean install" command or something equivalent. Note that you should do this
 in the ticket_viewer directory.
